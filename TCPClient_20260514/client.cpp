@@ -75,6 +75,8 @@ int main()
 			}
 			else if (Key == 'f' || Key == 'F')
 			{
+				remove("NewFile.png");
+
 				PacketHeader SendHeader;
 				SendHeader.Size = htons(sizeof(CS_File));
 				SendHeader.Code = htons(static_cast<unsigned short>(PacketType::CS_File));
@@ -162,20 +164,17 @@ void ProcessPosition(SOCKET InServerSocket, unsigned short InSize)
 
 void ProcessFile(SOCKET InServerSocket, unsigned short InSize)
 {
-	char Buffer[1024];
-
 	SC_File RecvData;
-	int retval = recv(InServerSocket, Buffer, InSize, MSG_WAITALL);
+	int retval = recv(InServerSocket, RecvData.FileData, InSize, MSG_WAITALL);
 	if (retval <= 0)
 	{
 		return;
 	}
 
-	FILE* fp = nullptr;
-	fopen_s(&fp, "NewFile.png", "ab");
-	if (fp) 
+	FILE* File = fopen("NewFile.png", "ab");
+	if (File)
 	{
-		fwrite(Buffer, 1, retval, fp);
-		fclose(fp);
+		fwrite(RecvData.FileData, 1, retval, File);
+		fclose(File);
 	}
 }

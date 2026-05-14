@@ -144,7 +144,7 @@ int main()
 
                 SC_File SendData;
                 size_t ReadBytes = 0;
-                while ((ReadBytes = fread(SendData.FileData, 1, 1024, File)) > 0)
+                while ((ReadBytes = fread(SendData.FileData, sizeof(char), SEND_BUFFER_SIZE, File)) > 0)
                 {
                     PacketHeader FileHeader;
                     FileHeader.Size = htons((unsigned short)ReadBytes);
