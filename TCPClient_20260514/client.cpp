@@ -4,6 +4,8 @@ int PlayerX = 0;
 int PlayerY = 0;
 
 void ReceiveThread(SOCKET InServerSocket);
+void ProcessPosition(SOCKET InServerSocket, unsigned short InSize);
+void ProcessFile(SOCKET InServerSocket, unsigned short InSize);
 
 void Gotoxy(int x, int y)
 {
@@ -71,6 +73,18 @@ int main()
 			{
 				Dir = 'D';
 			}
+			else if (Key == 'f' || Key == 'F')
+			{
+				PacketHeader SendHeader;
+				SendHeader.Size = htons(sizeof(CS_File));
+				SendHeader.Code = htons(static_cast<unsigned short>(PacketType::CS_File));
+
+				CS_File SendData;
+				strcpy_s(SendData.FileName, "Flower.png");
+
+				send(ServerSocket, (char*)&SendHeader, sizeof(SendHeader), 0);
+				send(ServerSocket, (char*)&SendData, sizeof(SendData), 0);
+			}
 
 			if (Dir != ' ')
 			{
@@ -84,6 +98,8 @@ int main()
 				send(ServerSocket, (char*)&SendHeader, sizeof(SendHeader), 0);
 				send(ServerSocket, (char*)&SendData, sizeof(SendData), 0);
 			}
+
+
 		}
 
 		Gotoxy(0, 0);
@@ -113,12 +129,12 @@ void ReceiveThread(SOCKET InServerSocket)
 		{
 		case PacketType::Position:
 		{
-			PositionData PosData;
-			retval = recv(InServerSocket, (char*)&PosData, Size, MSG_WAITALL);
-			if (retval <= 0) break;
-
-			PlayerX = ntohl(PosData.X);
-			PlayerY = ntohl(PosData.Y);
+			ProcessPosition(InServerSocket, Size);
+		}
+		break;
+		case PacketType::SC_File:
+		{
+			ProcessFile(InServerSocket, Size);
 		}
 		break;
 		default:
@@ -126,5 +142,40 @@ void ReceiveThread(SOCKET InServerSocket)
 			recv(InServerSocket, dummy, Size, MSG_WAITALL);
 			break;
 		}
+	}
+}
+
+void ProcessPosition(SOCKET InServerSocket, unsigned short InSize)
+{
+	PositionData PosData;
+	int retval = recv(InServerSocket, (char*)&PosData, InSize, MSG_WAITALL);
+	if (retval <= 0)
+	{
+		return;
+	}
+
+	PlayerX = ntohl(PosData.X);
+	PlayerY = ntohl(PosData.Y);
+
+	return;
+}
+
+void ProcessFile(SOCKET InServerSocket, unsigned short InSize)
+{
+	char Buffer[1024];
+
+	SC_File RecvData;
+	int retval = recv(InServerSocket, Buffer, InSize, MSG_WAITALL);
+	if (retval <= 0)
+	{
+		return;
+	}
+
+	FILE* fp = nullptr;
+	fopen_s(&fp, "NewFile.png", "ab");
+	if (fp) 
+	{
+		fwrite(Buffer, 1, retval, fp);
+		fclose(fp);
 	}
 }

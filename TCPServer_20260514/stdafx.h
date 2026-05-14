@@ -1,5 +1,6 @@
 #pragma once
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <WinSock2.h>
 #include <WS2tcpip.h>
@@ -12,3 +13,4 @@
 
 #define SERVER_IP	"127.0.0.1"
 #define SERVER_PORT 31000
+#define SEND_BUFFER_SIZE 1024

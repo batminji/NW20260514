@@ -57,13 +57,13 @@ int main()
             RecvHeader.Size = ntohs(RecvHeader.Size);
             RecvHeader.Code = ntohs(RecvHeader.Code);
 
-            // 데이터 수신 (블로킹)
-            MoveData Move;
-            recv(ClientSocket, (char*)&Move, RecvHeader.Size, MSG_WAITALL);
-
             // 이동 처리
             if ((PacketType)RecvHeader.Code == PacketType::Move)
             {
+                // 데이터 수신 (블로킹)
+                MoveData Move;
+                recv(ClientSocket, (char*)&Move, RecvHeader.Size, MSG_WAITALL);
+
                 int NewX = PlayerX;
                 int NewY = PlayerY;
 
@@ -134,6 +134,27 @@ int main()
                     }
                     TotalSent += Sent;
                 } while (TotalSent < WantSend);
+            }
+            else if ((PacketType)RecvHeader.Code == PacketType::CS_File)
+            {
+                CS_File RecvData;
+                recv(ClientSocket, (char*)&RecvData, RecvHeader.Size, MSG_WAITALL);
+
+                FILE* File = fopen(RecvData.FileName, "rb");
+
+                SC_File SendData;
+                size_t ReadBytes = 0;
+                while ((ReadBytes = fread(SendData.FileData, 1, 1024, File)) > 0)
+                {
+                    PacketHeader FileHeader;
+                    FileHeader.Size = htons((unsigned short)ReadBytes);
+                    FileHeader.Code = htons(static_cast<unsigned short>(PacketType::SC_File));
+
+                    send(ClientSocket, (char*)&FileHeader, sizeof(FileHeader), 0);
+                    send(ClientSocket, (char*)SendData.FileData, ReadBytes, 0);
+                }
+
+                fclose(File);
             }
         }
 
